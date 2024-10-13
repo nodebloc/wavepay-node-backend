@@ -332,6 +332,98 @@ const purchaseTV = async (req, res) => {
     }
 };
 
+const electricityProviders = async (req, res) => {
+
+    const providers = ["jos-electric", "eko-electric", "portharcourt-electric"];
+
+    
+    const data = { data: providers, status: true };
+    res.json(data);
+};
+
+const verifyMeter = async (req, res) => {
+    const { meterNumber, provider } = req.body;
+
+    if (!meterNumber || !provider) {
+        return res.status(400).json({ error: "Meter number and provider are required" });
+    }
+
+    const payload = {
+        serviceID: provider,
+        billersCode: meterNumber,
+        type: "prepaid"
+    };
+
+    const headers = {
+        'api-key': process.env.API_KEY,
+        'secret-key': process.env.SECRET_KEY,
+        'Content-Type': 'application/json'
+    };
+
+    const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: process.env.VT_SANDBOX_VERIFY_MERCHANT,
+        headers: headers,
+        data: JSON.stringify(payload)
+    };
+
+    try {
+        const response = await axios.request(config);
+
+        return res.status(200).json(response.data);
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: "Could not connect to the API endpoint",
+            error: error.message
+        });
+    }
+};
+
+const buyPower = async (req, res) => {
+    const { meterNumber, provider, phone, amount } = req.body;
+
+    if (!meterNumber || !provider || !phone || !amount) {
+        return res.status(400).json({ error: "Meter number, amount, phone number and provider are required" });
+    }
+
+    const payload = {
+        request_id: generateRequestId(),
+        serviceID: provider,
+        billersCode: meterNumber,
+        variation_code: "prepaid",
+        phone: phone,
+        amount: amount
+    };
+
+    const headers = {
+        'api-key': process.env.API_KEY,
+        'secret-key': process.env.SECRET_KEY,
+        'Content-Type': 'application/json'
+    };
+
+    const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: process.env.VT_SANDBOX_URL_PURCHASE,
+        headers: headers,
+        data: JSON.stringify(payload)
+    };
+
+    try {
+        const response = await axios.request(config);
+
+        return res.status(200).json(response.data);
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: "Could not connect to the API endpoint",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getBalance,
     getCategories,
@@ -342,5 +434,8 @@ module.exports = {
     purchaseData,
     getTVBouquet,
     verifyTVSC,
-    purchaseTV
+    purchaseTV,
+    electricityProviders,
+    verifyMeter,
+    buyPower
 };
