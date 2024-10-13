@@ -252,7 +252,6 @@ const getTVBouquet = async (req, res) => {
 };
 
 module.exports = {
-    test,
     getBalance,
     getCategories,
     purchaseProduct,
