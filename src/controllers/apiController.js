@@ -290,6 +290,48 @@ const verifyTVSC = async (req, res) => {
     }
 };
 
+const purchaseTV = async (req, res) => {
+    const { smartcardNumber, provider, phone, tvPlan } = req.body;
+
+    if (!smartcardNumber || !provider || !phone || !tvPlan) {
+        return res.status(400).json({ error: "Smart card number, tv plan, phone number and provider are required" });
+    }
+
+    const payload = {
+        request_id: generateRequestId(),
+        serviceID: provider,
+        billersCode: smartcardNumber,
+        variation_code: tvPlan,
+        phone: phone
+    };
+
+    const headers = {
+        'api-key': process.env.API_KEY,
+        'secret-key': process.env.SECRET_KEY,
+        'Content-Type': 'application/json'
+    };
+
+    const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: process.env.VT_SANDBOX_URL_PURCHASE,
+        headers: headers,
+        data: JSON.stringify(payload)
+    };
+
+    try {
+        const response = await axios.request(config);
+
+        return res.status(200).json(response.data);
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: "Could not connect to the API endpoint",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getBalance,
     getCategories,
@@ -299,5 +341,6 @@ module.exports = {
     getDataPlans,
     purchaseData,
     getTVBouquet,
-    verifyTVSC
+    verifyTVSC,
+    purchaseTV
 };
